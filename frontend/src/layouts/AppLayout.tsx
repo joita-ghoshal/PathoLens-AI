@@ -21,7 +21,7 @@ export default function AppLayout() {
     exact ? location.pathname === path : location.pathname.startsWith(path);
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
@@ -72,7 +72,7 @@ export default function AppLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
             <Menu className="w-5 h-5" />
