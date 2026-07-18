@@ -81,7 +81,8 @@ function ScrollToButton() {
       const threshold = 20;
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
       setIsAtBottom(atBottom);
-      setShow(el.scrollTop > 100 || atBottom);
+      const hasOverflow = el.scrollHeight > el.clientHeight + 10;
+      setShow(hasOverflow);
     };
 
     el.addEventListener('scroll', handleScroll, { passive: true });
@@ -116,7 +117,7 @@ export default function AppLayout() {
   useEffect(() => { closeSidebar(); }, [location.pathname]);
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-50">
       <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6">
         <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
           <Menu className="w-5 h-5" />
@@ -126,7 +127,6 @@ export default function AppLayout() {
       </header>
 
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar - desktop: flex child, always visible */}
         <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 bg-white border-r border-slate-200">
           <SidebarContent onNavigate={closeSidebar} />
         </aside>
@@ -136,10 +136,10 @@ export default function AppLayout() {
         </main>
       </div>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />
+      )}
 
-      {/* Sidebar - mobile: fixed overlay */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-end p-2">
           <button onClick={closeSidebar} className="p-2 text-slate-400 hover:text-slate-600">
