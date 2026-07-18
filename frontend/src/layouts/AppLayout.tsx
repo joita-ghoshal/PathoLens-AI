@@ -72,7 +72,7 @@ export default function AppLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
             <Menu className="w-5 h-5" />
@@ -80,7 +80,7 @@ export default function AppLayout() {
           <div className="flex-1" />
           <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
         </header>
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
