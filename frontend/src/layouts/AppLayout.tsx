@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 
 const navItems = [
   { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/app/analysis', icon: FlaskConical, label: 'New Analysis' },
+  { to: '/app/analysis', icon: FlaskConical, label: 'New Analysis', end: true },
   { to: '/app/analysis/history', icon: History, label: 'History' },
   { to: '/app/species', icon: Dna, label: 'Species Database' },
   { to: '/app/profile', icon: User, label: 'Profile' },
@@ -75,37 +75,39 @@ export default function AppLayout() {
   useEffect(() => { closeSidebar(); }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
+      <div className="flex flex-1 min-h-0">
+        {/* Desktop sidebar - fixed within viewport */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 shrink-0 bg-white border-r border-slate-200 overflow-y-auto">
+          <SidebarContent onNavigate={closeSidebar} />
+        </aside>
 
-      {/* Sidebar - desktop: sticky */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:flex lg:flex-col bg-white border-r border-slate-200">
-        <SidebarContent onNavigate={closeSidebar} />
-      </aside>
+        {/* Mobile overlay */}
+        {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
 
-      {/* Sidebar - mobile: fixed overlay */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-end p-2">
-          <button onClick={closeSidebar} className="p-2 text-slate-400 hover:text-slate-600">
-            <X className="w-5 h-5" />
-          </button>
+        {/* Mobile sidebar - fixed overlay */}
+        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="flex items-center justify-end p-2">
+            <button onClick={closeSidebar} className="p-2 text-slate-400 hover:text-slate-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <SidebarContent onNavigate={closeSidebar} />
+        </aside>
+
+        {/* Main content column */}
+        <div className="flex flex-col flex-1 min-w-0 min-h-0">
+          <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex-1" />
+            <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
+          </header>
+          <main className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
+            <Outlet />
+          </main>
         </div>
-        <SidebarContent onNavigate={closeSidebar} />
-      </aside>
-
-      {/* Main content */}
-      <div className="lg:ml-64 min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex-1" />
-          <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
-        </header>
-        <main className="flex-1 p-4 lg:p-6">
-          <Outlet />
-        </main>
       </div>
     </div>
   );
