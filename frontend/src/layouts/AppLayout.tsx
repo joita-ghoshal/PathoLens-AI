@@ -75,12 +75,12 @@ export default function AppLayout() {
   useEffect(() => { closeSidebar(); }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen flex bg-slate-50 overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
 
-      {/* Sidebar - desktop: sticky */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:flex lg:flex-col bg-white border-r border-slate-200">
+      {/* Sidebar - desktop: flex child, always visible */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 bg-white border-r border-slate-200">
         <SidebarContent onNavigate={closeSidebar} />
       </aside>
 
@@ -94,16 +94,16 @@ export default function AppLayout() {
         <SidebarContent onNavigate={closeSidebar} />
       </aside>
 
-      {/* Main content */}
-      <div className="lg:ml-64">
-        <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 shrink-0">
+      {/* Main content area */}
+      <div className="flex flex-col flex-1 min-w-0 h-full">
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 z-30">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1" />
           <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
         </header>
-        <main className="p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
