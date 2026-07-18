@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Microscope, LayoutDashboard, FlaskConical, Dna, User, Shield, LogOut, History, Menu, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Microscope, LayoutDashboard, FlaskConical, Dna, User, Shield, LogOut, History, Menu, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 const navItems = [
   { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -67,6 +67,47 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
+function ScrollToButton() {
+  const [show, setShow] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const scrollRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('main');
+    if (!el) return;
+    scrollRef.current = el;
+
+    const handleScroll = () => {
+      const threshold = 20;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      setIsAtBottom(atBottom);
+      setShow(el.scrollTop > 100 || atBottom);
+    };
+
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: isAtBottom ? 0 : el.scrollHeight, behavior: 'smooth' });
+  };
+
+  if (!show) return null;
+
+  return (
+    <button
+      onClick={scroll}
+      className="fixed bottom-8 right-6 z-30 p-3 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-lg text-slate-600 hover:text-primary-600 hover:shadow-xl transition-all duration-200 hover:scale-110"
+      title={isAtBottom ? 'Scroll to top' : 'Scroll to bottom'}
+    >
+      {isAtBottom ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+    </button>
+  );
+}
+
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -107,6 +148,8 @@ export default function AppLayout() {
         </div>
         <SidebarContent onNavigate={closeSidebar} />
       </aside>
+
+      <ScrollToButton />
     </div>
   );
 }
