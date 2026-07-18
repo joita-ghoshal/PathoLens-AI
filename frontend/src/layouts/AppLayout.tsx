@@ -95,7 +95,7 @@ export default function AppLayout() {
       </aside>
 
       {/* Main content area */}
-      <div className="flex flex-col flex-1 min-w-0 min-h-0 h-full">
+      <div className="flex flex-col flex-1 min-w-0 min-h-0">
         <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 z-30">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
             <Menu className="w-5 h-5" />
