@@ -75,14 +75,28 @@ export default function AppLayout() {
   useEffect(() => { closeSidebar(); }, [location.pathname]);
 
   return (
-    <div className="h-screen flex bg-slate-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+      <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6">
+        <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="flex-1" />
+        <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
+      </header>
+
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar - desktop: flex child, always visible */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 bg-white border-r border-slate-200">
+          <SidebarContent onNavigate={closeSidebar} />
+        </aside>
+
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6">
+          <Outlet />
+        </main>
+      </div>
+
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
-
-      {/* Sidebar - desktop: flex child, always visible */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 bg-white border-r border-slate-200">
-        <SidebarContent onNavigate={closeSidebar} />
-      </aside>
 
       {/* Sidebar - mobile: fixed overlay */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -93,20 +107,6 @@ export default function AppLayout() {
         </div>
         <SidebarContent onNavigate={closeSidebar} />
       </aside>
-
-      {/* Main content area */}
-      <div className="flex flex-col flex-1 min-w-0 min-h-0">
-        <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 z-30">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex-1" />
-          <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
-        </header>
-        <main className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
-          <Outlet />
-        </main>
-      </div>
     </div>
   );
 }
