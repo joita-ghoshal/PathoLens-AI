@@ -1,18 +1,24 @@
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Microscope, LayoutDashboard, FlaskConical, Dna, User, Shield, LogOut, History, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
-  { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/app/analysis', icon: FlaskConical, label: 'New Analysis', end: true },
-  { to: '/app/analysis/history', icon: History, label: 'History' },
-  { to: '/app/species', icon: Dna, label: 'Species Database' },
-  { to: '/app/profile', icon: User, label: 'Profile' },
+  { to: '/app', exact: true, icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/app/analysis', exact: true, icon: FlaskConical, label: 'New Analysis' },
+  { to: '/app/analysis/history', exact: true, icon: History, label: 'History' },
+  { to: '/app/species', exact: false, icon: Dna, label: 'Species Database' },
+  { to: '/app/profile', exact: true, icon: User, label: 'Profile' },
 ];
+
+function isActive(to: string, exact: boolean, pathname: string): boolean {
+  if (exact) return pathname === to;
+  return pathname === to || pathname.startsWith(to + '/');
+}
 
 function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   const { user, logout } = useAuthStore();
+  const location = useLocation();
   const navigate = useNavigate();
 
   return (
@@ -22,29 +28,28 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
         <span className="text-lg font-bold text-slate-900">PathoLens</span>
       </div>
       <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {navItems.map(({ to, icon: Icon, label, end }) => (
-          <NavLink key={to} to={to} end={end} onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
+        {navItems.map(({ to, exact, icon: Icon, label }) => {
+          const active = isActive(to, exact, location.pathname);
+          return (
+            <Link key={to} to={to} onClick={onNavigate}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                active
                   ? 'bg-primary-50 text-primary-700'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`
-            }>
-            <Icon className="w-5 h-5" />
-            {label}
-          </NavLink>
-        ))}
+              }`}>
+              <Icon className="w-5 h-5" />
+              {label}
+            </Link>
+          );
+        })}
         {user?.role === 'super_admin' && (
-          <NavLink to="/app/admin" onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'
-              }`
-            }>
+          <Link to="/app/admin" onClick={onNavigate}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === '/app/admin' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'
+            }`}>
             <Shield className="w-5 h-5" />
             Admin Panel
-          </NavLink>
+          </Link>
         )}
       </nav>
       <div className="p-4 shrink-0 border-t border-slate-200">
@@ -75,39 +80,39 @@ export default function AppLayout() {
   useEffect(() => { closeSidebar(); }, [location.pathname]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
-      <div className="flex flex-1 min-h-0">
-        {/* Desktop sidebar - fixed within viewport */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-64 shrink-0 bg-white border-r border-slate-200 overflow-y-auto">
-          <SidebarContent onNavigate={closeSidebar} />
-        </aside>
+    <div className="min-h-screen bg-slate-50">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />
+      )}
 
-        {/* Mobile overlay */}
-        {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
-
-        {/* Mobile sidebar - fixed overlay */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="flex items-center justify-end p-2">
-            <button onClick={closeSidebar} className="p-2 text-slate-400 hover:text-slate-600">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <SidebarContent onNavigate={closeSidebar} />
-        </aside>
-
-        {/* Main content column */}
-        <div className="flex flex-col flex-1 min-w-0 min-h-0">
-          <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="flex-1" />
-            <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
-          </header>
-          <main className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
-            <Outlet />
-          </main>
+      {/* Mobile sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-end p-2">
+          <button onClick={closeSidebar} className="p-2 text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
         </div>
+        <SidebarContent onNavigate={closeSidebar} />
+      </div>
+
+      {/* Desktop sidebar - fixed, full height, scrolls independently */}
+      <div className="hidden lg:block fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 overflow-y-auto">
+        <SidebarContent onNavigate={closeSidebar} />
+      </div>
+
+      {/* Page content - normal document flow, scrolls naturally */}
+      <div className="lg:ml-64">
+        <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex-1" />
+          <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
+        </header>
+        <main className="p-4 lg:p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
