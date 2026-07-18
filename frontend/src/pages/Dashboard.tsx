@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { dashboardAPI } from '../api';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { FlaskConical, Dna, Activity, ArrowRight, AlertTriangle, Heart, Shield } from 'lucide-react';
+import { FlaskConical, Dna, ArrowRight, AlertTriangle, Heart } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 

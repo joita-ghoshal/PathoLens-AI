@@ -1,4 +1,4 @@
-import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Microscope, LayoutDashboard, FlaskConical, Dna, User, Shield, LogOut, History, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
