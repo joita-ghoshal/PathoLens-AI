@@ -30,6 +30,10 @@ export const authAPI = {
 export const speciesAPI = {
   list: (params?: any) => api.get('/species', { params }),
   detail: (id: number) => api.get(`/species/${id}`),
+  stats: () => api.get('/species/stats'),
+  create: (data: any) => api.post('/species', data),
+  update: (id: number, data: any) => api.put(`/species/${id}`, data),
+  delete: (id: number) => api.delete(`/species/${id}`),
 };
 
 export const analysisAPI = {

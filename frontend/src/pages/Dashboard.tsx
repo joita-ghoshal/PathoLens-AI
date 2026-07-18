@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { dashboardAPI } from '../api';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { FlaskConical, Dna, Activity, ArrowRight, AlertTriangle } from 'lucide-react';
+import { FlaskConical, Dna, Activity, ArrowRight, AlertTriangle, Heart, Shield } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
@@ -18,10 +18,10 @@ export default function Dashboard() {
   if (!data) return <div className="text-center text-slate-500 py-12">Failed to load dashboard</div>;
 
   const statCards = [
-    { icon: Dna, label: 'Total Species', value: data.total_species, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { icon: AlertTriangle, label: 'Pathogenic', value: data.pathogenic_count, color: 'text-red-600', bg: 'bg-red-50' },
-    { icon: Activity, label: 'Beneficial', value: data.beneficial_count, color: 'text-green-600', bg: 'bg-green-50' },
-    { icon: FlaskConical, label: 'Analyses Run', value: data.total_analyses, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { icon: Dna, label: 'Total Species', value: data.total_species, color: 'text-blue-600', bg: 'bg-blue-50', to: '/app/species', borderHover: 'hover:border-blue-300', shadowHover: 'hover:shadow-blue-50' },
+    { icon: AlertTriangle, label: 'Pathogenic', value: data.pathogenic_count, color: 'text-red-600', bg: 'bg-red-50', to: '/app/pathogenic', borderHover: 'hover:border-red-300', shadowHover: 'hover:shadow-red-50' },
+    { icon: Heart, label: 'Beneficial', value: data.beneficial_count, color: 'text-green-600', bg: 'bg-green-50', to: '/app/beneficial', borderHover: 'hover:border-green-300', shadowHover: 'hover:shadow-green-50' },
+    { icon: FlaskConical, label: 'Analyses Run', value: data.total_analyses, color: 'text-purple-600', bg: 'bg-purple-50', to: '/app/analysis/history', borderHover: 'hover:border-purple-300', shadowHover: 'hover:shadow-purple-50' },
   ];
 
   return (
@@ -38,14 +38,18 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map(({ icon: Icon, label, value, color, bg }) => (
-          <div key={label} className="bg-white rounded-xl border border-slate-200 p-5">
-            <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center mb-3`}>
+        {statCards.map(({ icon: Icon, label, value, color, bg, to, borderHover, shadowHover }) => (
+          <Link key={label} to={to}
+            className={`group bg-white rounded-xl border border-slate-200 p-5 transition-all duration-200 hover:shadow-lg ${borderHover} ${shadowHover}`}>
+            <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
               <Icon className={`w-5 h-5 ${color}`} />
             </div>
             <p className="text-2xl font-bold text-slate-900">{value}</p>
             <p className="text-sm text-slate-500 mt-1">{label}</p>
-          </div>
+            <div className="mt-2 flex items-center gap-1 text-xs text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              View details <ArrowRight className="w-3 h-3" />
+            </div>
+          </Link>
         ))}
       </div>
 
@@ -103,7 +107,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {data.recent_analyses.slice(0, 5).map((a: any) => (
-                <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
                   <div className={`w-2 h-2 rounded-full ${a.risk_level === 'critical' ? 'bg-red-500' : a.risk_level === 'high' ? 'bg-orange-500' : 'bg-green-500'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{a.top_candidate || 'Pending'}</p>

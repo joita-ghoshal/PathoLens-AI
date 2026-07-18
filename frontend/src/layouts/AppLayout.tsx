@@ -1,25 +1,18 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Microscope, LayoutDashboard, FlaskConical, Dna, User, Shield, LogOut, History, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { Microscope, LayoutDashboard, FlaskConical, Dna, User, Shield, LogOut, History, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const navItems = [
-  { to: '/app', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/app/analysis', icon: FlaskConical, label: 'New Analysis' },
   { to: '/app/analysis/history', icon: History, label: 'History' },
   { to: '/app/species', icon: Dna, label: 'Species Database' },
   { to: '/app/profile', icon: User, label: 'Profile' },
 ];
 
-function isActive(path: string, pathname: string): boolean {
-  if (path === '/app') return pathname === '/app';
-  if (path === '/app/species') return pathname === '/app/species' || pathname.startsWith('/app/species/');
-  return pathname === path;
-}
-
 function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   const { user, logout } = useAuthStore();
-  const location = useLocation();
   const navigate = useNavigate();
 
   return (
@@ -29,25 +22,29 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
         <span className="text-lg font-bold text-slate-900">PathoLens</span>
       </div>
       <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <Link key={to} to={to} onClick={onNavigate}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive(to, location.pathname)
-                ? 'bg-primary-50 text-primary-700'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            }`}>
+        {navItems.map(({ to, icon: Icon, label, end }) => (
+          <NavLink key={to} to={to} end={end} onClick={onNavigate}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`
+            }>
             <Icon className="w-5 h-5" />
             {label}
-          </Link>
+          </NavLink>
         ))}
         {user?.role === 'super_admin' && (
-          <Link to="/app/admin" onClick={onNavigate}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive('/app/admin', location.pathname) ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'
-            }`}>
+          <NavLink to="/app/admin" onClick={onNavigate}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'
+              }`
+            }>
             <Shield className="w-5 h-5" />
             Admin Panel
-          </Link>
+          </NavLink>
         )}
       </nav>
       <div className="p-4 shrink-0 border-t border-slate-200">
@@ -72,33 +69,41 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
   const closeSidebar = () => setSidebarOpen(false);
 
+  useEffect(() => { closeSidebar(); }, [location.pathname]);
+
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeSidebar} />}
 
-      {/* Sidebar - desktop: static in flow, mobile: fixed overlay */}
-      <aside className={`hidden lg:block lg:w-64 lg:shrink-0 bg-white border-r border-slate-200`}>
+      {/* Sidebar - desktop: sticky */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:flex lg:flex-col bg-white border-r border-slate-200">
         <SidebarContent onNavigate={closeSidebar} />
       </aside>
 
       {/* Sidebar - mobile: fixed overlay */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-end p-2">
+          <button onClick={closeSidebar} className="p-2 text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
         <SidebarContent onNavigate={closeSidebar} />
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 shrink-0">
+      <div className="lg:ml-64 min-h-screen flex flex-col">
+        <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:text-slate-900">
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1" />
           <span className="text-xs text-slate-400">PathoLens AI v1.0</span>
         </header>
-        <main className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
