@@ -7,6 +7,7 @@ class UserRegister(BaseModel):
     email: str
     username: str
     password: str
+    role: str
     first_name: str = ""
     last_name: str = ""
     institution: str = ""

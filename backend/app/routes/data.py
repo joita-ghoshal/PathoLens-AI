@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_role
 from app.models.species import BacterialSpecies, Disease, SpeciesDisease
 from app.models.analysis import Analysis, Symptom
+from app.models.user import User
+from app.core.security import get_password_hash
 
 router = APIRouter(prefix="/api", tags=["data"])
 
@@ -97,13 +99,16 @@ def dashboard_overview(db: Session = Depends(get_db), _=Depends(get_current_user
 
 
 @router.get("/admin/users")
-def admin_list_users(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    from app.models.user import User
+def admin_list_users(
+    current_user: User = Depends(require_role("super_admin", "admin")),
+    db: Session = Depends(get_db),
+):
     users = db.query(User).order_by(User.created_at.desc()).all()
-    return [
-        {
+    is_super = current_user.role == "super_admin"
+    result = []
+    for u in users:
+        entry = {
             "id": u.id,
-            "email": u.email,
             "username": u.username,
             "first_name": u.first_name,
             "last_name": u.last_name,
@@ -113,22 +118,164 @@ def admin_list_users(db: Session = Depends(get_db), _=Depends(get_current_user))
             "is_active": u.is_active,
             "created_at": u.created_at.isoformat() if u.created_at else None,
         }
-        for u in users
-    ]
+        if is_super:
+            entry["email"] = u.email
+        result.append(entry)
+    return result
+
+
+@router.get("/admin/users/{user_id}")
+def admin_get_user(
+    user_id: str,
+    current_user: User = Depends(require_role("super_admin")),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "institution": user.institution,
+        "department": user.department,
+        "role": user.role,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
 
 
 @router.put("/admin/users/{user_id}/role")
 def admin_update_role(
     user_id: str,
     body: dict,
+    _=Depends(require_role("super_admin")),
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
 ):
-    from app.models.user import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="User not found")
-    user.role = body.get("role", user.role)
+    new_role = body.get("role", user.role)
+    if user.role == "super_admin" and new_role != "super_admin":
+        super_admin_count = db.query(User).filter(User.role == "super_admin").count()
+        if super_admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot demote the only Super Admin")
+    user.role = new_role
     db.commit()
     return {"ok": True, "role": user.role}
+
+
+@router.put("/admin/users/{user_id}")
+def admin_update_user(
+    user_id: str,
+    body: dict,
+    _=Depends(require_role("super_admin")),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if "first_name" in body:
+        user.first_name = body["first_name"]
+    if "last_name" in body:
+        user.last_name = body["last_name"]
+    if "institution" in body:
+        user.institution = body["institution"]
+    if "department" in body:
+        user.department = body["department"]
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/admin/users/{user_id}")
+def admin_delete_user(
+    user_id: str,
+    current_user: User = Depends(require_role("super_admin")),
+    db: Session = Depends(get_db),
+):
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.role == "super_admin":
+        raise HTTPException(status_code=400, detail="Cannot delete a Super Admin")
+    db.delete(user)
+    db.commit()
+    return {"ok": True}
+
+
+@router.put("/admin/users/{user_id}/activate")
+def admin_toggle_activate(
+    user_id: str,
+    body: dict,
+    current_user: User = Depends(require_role("super_admin")),
+    db: Session = Depends(get_db),
+):
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = body.get("is_active", user.is_active)
+    db.commit()
+    return {"ok": True, "is_active": user.is_active}
+
+
+@router.put("/admin/users/{user_id}/password")
+def admin_change_password(
+    user_id: str,
+    body: dict,
+    _=Depends(require_role("super_admin")),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    new_password = body.get("password", "")
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    user.password_hash = get_password_hash(new_password)
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/admin/users")
+def admin_create_user(
+    body: dict,
+    _=Depends(require_role("super_admin")),
+    db: Session = Depends(get_db),
+):
+    import uuid
+    email = body.get("email", "")
+    username = body.get("username", "")
+    password = body.get("password", "")
+    role = body.get("role", "researcher")
+    allowed_roles = {"student", "researcher", "clinician", "admin"}
+    if role not in allowed_roles:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    if not email or not username or not password:
+        raise HTTPException(status_code=400, detail="Email, username, and password are required")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    if db.query(User).filter(User.username == username).first():
+        raise HTTPException(status_code=400, detail="Username already taken")
+    user = User(
+        id=str(uuid.uuid4()),
+        email=email,
+        username=username,
+        password_hash=get_password_hash(password),
+        role=role,
+        first_name=body.get("first_name", ""),
+        last_name=body.get("last_name", ""),
+        institution=body.get("institution", ""),
+        department=body.get("department", ""),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"ok": True, "id": user.id, "role": user.role}

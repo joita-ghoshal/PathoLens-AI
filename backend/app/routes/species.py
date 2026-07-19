@@ -289,7 +289,7 @@ def update_species(
     species_id: int,
     data: SpeciesUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_role("super_admin", "admin")),
+    _=Depends(require_role("super_admin")),
 ):
     sp = db.query(BacterialSpecies).filter(BacterialSpecies.id == species_id).first()
     if not sp:
@@ -305,7 +305,7 @@ def update_species(
 def delete_species(
     species_id: int,
     db: Session = Depends(get_db),
-    _=Depends(require_role("super_admin", "admin")),
+    _=Depends(require_role("super_admin")),
 ):
     sp = db.query(BacterialSpecies).filter(BacterialSpecies.id == species_id).first()
     if not sp:

@@ -12,6 +12,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=TokenResponse)
 def register(data: UserRegister, db: Session = Depends(get_db)):
+    allowed_roles = {"student", "researcher", "clinician"}
+    if data.role not in allowed_roles:
+        raise HTTPException(status_code=400, detail={"code": "INVALID_ROLE", "message": "Role must be one of: student, researcher, clinician"})
     if db.query(User).filter(User.email == data.email).first():
         raise HTTPException(status_code=400, detail={"code": "DUPLICATE", "message": "Email already registered"})
     if db.query(User).filter(User.username == data.username).first():
@@ -21,6 +24,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
         email=data.email,
         username=data.username,
         password_hash=get_password_hash(data.password),
+        role=data.role,
         first_name=data.first_name,
         last_name=data.last_name,
         institution=data.institution,

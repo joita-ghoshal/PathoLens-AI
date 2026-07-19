@@ -35,7 +35,7 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
             {label}
           </NavLink>
         ))}
-        {user?.role === 'super_admin' && (
+        {(user?.role === 'super_admin' || user?.role === 'admin') && (
           <NavLink to="/app/admin" onClick={onNavigate}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${

@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { Microscope } from 'lucide-react';
 
 export default function Register() {
-  const [form, setForm] = useState({ email: '', username: '', password: '', first_name: '', last_name: '', institution: '', department: '' });
+  const [form, setForm] = useState({ email: '', username: '', password: '', role: '', first_name: '', last_name: '', institution: '', department: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
@@ -13,13 +13,17 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.role) {
+      setError('Please select a role');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
       await register(form);
       navigate('/app');
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Registration failed');
+      setError(err.response?.data?.detail?.message || err.response?.data?.error?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -70,6 +74,16 @@ export default function Register() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Password *</label>
               <input type="password" required value={form.password} onChange={(e) => update('password', e.target.value)}
                 className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="Min 6 characters" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Role *</label>
+              <select required value={form.role} onChange={(e) => update('role', e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                <option value="">Select your role...</option>
+                <option value="student">Student</option>
+                <option value="researcher">Researcher</option>
+                <option value="clinician">Clinician</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Institution</label>

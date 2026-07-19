@@ -57,7 +57,13 @@ export const symptomsAPI = {
 
 export const adminAPI = {
   users: () => api.get('/admin/users'),
+  getUser: (id: string) => api.get(`/admin/users/${id}`),
   updateRole: (id: string, role: string) => api.put(`/admin/users/${id}/role`, { role }),
+  updateUser: (id: string, data: any) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+  toggleActivate: (id: string, is_active: boolean) => api.put(`/admin/users/${id}/activate`, { is_active }),
+  changePassword: (id: string, password: string) => api.put(`/admin/users/${id}/password`, { password }),
+  createUser: (data: any) => api.post('/admin/users', data),
 };
 
 export default api;

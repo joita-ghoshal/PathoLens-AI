@@ -16,10 +16,11 @@ const Beneficial = lazy(() => import('./pages/Beneficial'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Admin = lazy(() => import('./pages/Admin'));
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token, loading } = useAuthStore();
+function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
+  const { token, user, loading } = useAuthStore();
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-slate-50"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full" /></div>;
   if (!token) return <Navigate to="/login" />;
+  if (adminOnly && user && !['super_admin', 'admin'].includes(user.role)) return <Navigate to="/app" />;
   return <>{children}</>;
 }
 
@@ -51,7 +52,7 @@ export default function App() {
             <Route path="pathogenic" element={<Pathogenic />} />
             <Route path="beneficial" element={<Beneficial />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="admin" element={<Admin />} />
+            <Route path="admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
           </Route>
         </Routes>
       </Suspense>
