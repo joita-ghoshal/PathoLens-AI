@@ -114,52 +114,95 @@ function SuperAdminUsersTab() {
   const [editModal, setEditModal] = useState<any>(null);
   const [passwordModal, setPasswordModal] = useState<any>(null);
   const [createModal, setCreateModal] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [createForm, setCreateForm] = useState({ email: '', username: '', password: '', first_name: '', last_name: '', institution: '', department: '', role: 'researcher' });
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const loadUsers = () => {
     setLoading(true);
-    adminAPI.users().then((r) => { setUsers(r.data); setLoading(false); }).catch(() => setLoading(false));
+    adminAPI.users().then((r) => { setUsers(r.data); setLoading(false); }).catch(() => { setLoading(false); showToast('error', 'Failed to load users'); });
   };
   useEffect(loadUsers, []);
 
   const updateRole = async (userId: string, role: string) => {
-    await adminAPI.updateRole(userId, role);
-    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role } : u));
+    try {
+      await adminAPI.updateRole(userId, role);
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role } : u));
+      showToast('success', 'Role updated successfully');
+    } catch (e: any) {
+      showToast('error', e.response?.data?.detail || 'Failed to update role');
+    }
   };
 
   const deleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-    await adminAPI.deleteUser(userId);
-    loadUsers();
+    try {
+      await adminAPI.deleteUser(userId);
+      showToast('success', 'User deleted successfully');
+      loadUsers();
+    } catch (e: any) {
+      showToast('error', e.response?.data?.detail || 'Failed to delete user');
+    }
   };
 
   const toggleActive = async (userId: string, isActive: boolean) => {
-    await adminAPI.toggleActivate(userId, !isActive);
-    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, is_active: !isActive } : u));
+    try {
+      const res = await adminAPI.toggleActivate(userId, !isActive);
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, is_active: res.data.is_active } : u));
+      showToast('success', res.data.is_active ? 'User activated successfully' : 'User deactivated successfully');
+    } catch (e: any) {
+      showToast('error', e.response?.data?.detail || 'Failed to change user status');
+    }
   };
 
   const changePassword = async (userId: string, password: string) => {
-    await adminAPI.changePassword(userId, password);
-    setPasswordModal(null);
+    try {
+      await adminAPI.changePassword(userId, password);
+      setPasswordModal(null);
+      showToast('success', 'Password changed successfully');
+    } catch (e: any) {
+      showToast('error', e.response?.data?.detail || 'Failed to change password');
+    }
   };
 
   const updateUser = async (userId: string, data: any) => {
-    await adminAPI.updateUser(userId, data);
-    setEditModal(null);
-    loadUsers();
+    try {
+      await adminAPI.updateUser(userId, data);
+      setEditModal(null);
+      showToast('success', 'User updated successfully');
+      loadUsers();
+    } catch (e: any) {
+      showToast('error', e.response?.data?.detail || 'Failed to update user');
+    }
   };
 
   const createUser = async () => {
-    await adminAPI.createUser(createForm);
-    setCreateModal(false);
-    setCreateForm({ email: '', username: '', password: '', first_name: '', last_name: '', institution: '', department: '', role: 'researcher' });
-    loadUsers();
+    try {
+      await adminAPI.createUser(createForm);
+      setCreateModal(false);
+      setCreateForm({ email: '', username: '', password: '', first_name: '', last_name: '', institution: '', department: '', role: 'researcher' });
+      showToast('success', 'User created successfully');
+      loadUsers();
+    } catch (e: any) {
+      showToast('error', e.response?.data?.detail || 'Failed to create user');
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full" /></div>;
 
   return (
     <div>
+      {toast && (
+        <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${
+          toast.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+        }`}>
+          {toast.message}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-500">Total users: {users.length}</p>
         <button onClick={() => setCreateModal(true)}
